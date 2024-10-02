@@ -2,30 +2,23 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const iconv = require("iconv-lite");
-var Companies;
-(function (Companies) {
-    Companies[Companies["JRH"] = 0] = "JRH";
-    Companies[Companies["JRE"] = 1] = "JRE";
-    Companies[Companies["JRC"] = 2] = "JRC";
-    Companies[Companies["JRW"] = 3] = "JRW";
-    Companies[Companies["JRS"] = 4] = "JRS";
-    Companies[Companies["JRQ"] = 5] = "JRQ";
-})(Companies = exports.Companies || (exports.Companies = {}));
+const dataInterface_1 = require("../../src/app/dataInterface");
 const companyHash = {
-    "JR北": Companies.JRH,
-    "JR東": Companies.JRE,
-    "JR海": Companies.JRC,
-    "JR西": Companies.JRW,
-    "JR四": Companies.JRS,
-    "JR九": Companies.JRQ
+    JR北: dataInterface_1.Companies.JRH,
+    JR東: dataInterface_1.Companies.JRE,
+    JR海: dataInterface_1.Companies.JRC,
+    JR西: dataInterface_1.Companies.JRW,
+    JR四: dataInterface_1.Companies.JRS,
+    JR九: dataInterface_1.Companies.JRQ
 };
 const output = {
     lineNames: [],
     stationNames: [],
     lines: [],
-    stations: []
+    stations: [],
+    cities: []
 };
-const dataSD = fs.readFileSync('./resource/mars_sd.dat');
+const dataSD = fs.readFileSync('./resource/MARS_SD.DAT');
 /**
  * 半角カタカナを全角ひらがなに変換
  * https://qiita.com/hrdaya/items/291276a5a20971592216
@@ -54,9 +47,7 @@ const hankana2zenkana = function (str) {
     };
     const reg = new RegExp('(' + Object.keys(kanaMap).join('|') + ')', 'g');
     return str
-        .replace(reg, function (match) {
-        return kanaMap[match];
-    })
+        .replace(reg, match => kanaMap[match])
         .replace(/ﾞ/g, '゛')
         .replace(/ﾟ/g, '゜');
 };
@@ -85,6 +76,7 @@ for (let r = 0; r < recordsNumSD; ++r) {
             akms: [],
             dupLineStationIds: [],
             chiho: false,
+            shinkansen: record[3].indexOf('新幹線') > -1,
             company: [],
             mapZairai: []
         };
@@ -108,7 +100,8 @@ for (let r = 0; r < recordsNumSD; ++r) {
                 name: record[3],
                 kana: hankana2zenkana(record[4]),
                 lineIds: [record[0]],
-                company: []
+                company: [],
+                city: -1
             });
             output.stationNames.push(record[3]);
         }
@@ -119,7 +112,7 @@ for (let r = 0; r < recordsNumSD; ++r) {
         line.stationIds.push(stationId);
     }
 }
-const dataNN = fs.readFileSync('./resource/mars_nn.dat');
+const dataNN = fs.readFileSync('./resource/MARS_NN.DAT');
 const recordsNum = dataNN.length / 8;
 for (let r = 0; r < recordsNum; ++r) {
     const offset = 8 * r;
@@ -160,6 +153,7 @@ output.lines[0] = {
     src: '',
     dest: '',
     chiho: false,
+    shinkansen: false,
     company: [],
     mapZairai: []
 };
@@ -182,37 +176,39 @@ for (let companyName of Object.keys(companyJSONData)) {
     output.lineNames.forEach((lineName, lineId) => {
         let line = output.lines[lineId];
         for (let i = 0; i < c.entire.length; ++i) {
-            if (lineName.indexOf(c.entire[i]) === 0) {
-                output.lines[lineId].company.push(companyCode);
-                output.lines[lineId].stationIds.forEach(stationId => {
+            if (lineName.indexOf(c.entire[i]) !== 0) {
+                continue;
+            }
+            output.lines[lineId].company.push(companyCode);
+            output.lines[lineId].stationIds.forEach(stationId => {
+                let companyList = output.stations[stationId].company;
+                if (!companyList.includes(companyCode)) {
+                    companyList.push(companyCode);
+                }
+            });
+            return;
+        }
+        for (let partialLineName of Object.keys(c.partial)) {
+            if (lineName.indexOf(partialLineName) !== 0) {
+                continue;
+            }
+            for (let i = 0; i < c.partial[partialLineName].length / 2; ++i) {
+                let startIndex = line.stations.indexOf(c.partial[partialLineName][i * 2]);
+                let endIndex = line.stations.indexOf(c.partial[partialLineName][i * 2 + 1]);
+                [startIndex, endIndex] = [Math.min(startIndex, endIndex), Math.max(startIndex, endIndex)];
+                if (startIndex < 0 || endIndex < 0) {
+                    continue;
+                }
+                for (let index = startIndex; index <= endIndex; ++index) {
+                    line.company[index] = companyCode;
+                }
+                const stationIds = line.stationIds.slice(startIndex, endIndex + 1);
+                stationIds.forEach(stationId => {
                     let companyList = output.stations[stationId].company;
                     if (!companyList.includes(companyCode)) {
                         companyList.push(companyCode);
                     }
                 });
-                return;
-            }
-        }
-        for (let partialLineName of Object.keys(c.partial)) {
-            if (lineName.indexOf(partialLineName) === 0) {
-                for (let i = 0; i < c.partial[partialLineName].length / 2; ++i) {
-                    let startIndex = line.stations.indexOf(c.partial[partialLineName][i * 2]);
-                    let endIndex = line.stations.indexOf(c.partial[partialLineName][i * 2 + 1]);
-                    [startIndex, endIndex] = [Math.min(startIndex, endIndex), Math.max(startIndex, endIndex)];
-                    if (startIndex < 0 || endIndex < 0) {
-                        continue;
-                    }
-                    for (let index = startIndex; index <= endIndex; ++index) {
-                        line.company[index] = companyCode;
-                    }
-                    const stationIds = line.stationIds.slice(startIndex, endIndex + 1);
-                    stationIds.forEach(stationId => {
-                        let companyList = output.stations[stationId].company;
-                        if (!companyList.includes(companyCode)) {
-                            companyList.push(companyCode);
-                        }
-                    });
-                }
             }
         }
         if (line.company.length < 1) {
@@ -225,19 +221,61 @@ const shinzais = Object.assign([], dataShinzai);
 for (let shinzai of shinzais) {
     const shin = output.lines[output.lineNames.indexOf(shinzai.line2)];
     const zai = output.lines[output.lineNames.indexOf(shinzai.line1)];
-    let startIndex = shin.stations.indexOf(shinzai.src);
-    let endIndex = shin.stations.indexOf(shinzai.dest);
-    shin.mapZairai.push({
-        startIndex: Math.min(startIndex, endIndex),
-        endIndex: Math.max(startIndex, endIndex),
-        targetLine: zai.id
+    [[shin, zai], [zai, shin]].forEach((lines) => {
+        let startIndex = lines[0].stations.indexOf(shinzai.src);
+        let endIndex = lines[0].stations.indexOf(shinzai.dest);
+        lines[0].mapZairai.push({
+            startIndex: Math.min(startIndex, endIndex),
+            endIndex: Math.max(startIndex, endIndex),
+            targetLine: lines[1].id
+        });
     });
-    startIndex = zai.stations.indexOf(shinzai.src);
-    endIndex = zai.stations.indexOf(shinzai.dest);
-    zai.mapZairai.push({
-        startIndex: Math.min(startIndex, endIndex),
-        endIndex: Math.max(startIndex, endIndex),
-        targetLine: shin.id
+}
+const dataCity = JSON.parse(fs.readFileSync('./resource/city.json', 'utf8'));
+const cities = Object.assign({}, dataCity);
+for (let cityAreaName of Object.keys(cities)) {
+    const cityArea = cities[cityAreaName];
+    const cityStationIds = [output.stationNames.indexOf(cityArea.origin)];
+    const sourcedList = [];
+    let i = 0;
+    while (cityStationIds.length > sourcedList.length) {
+        const srcStationId = cityStationIds[i++];
+        const srcStation = output.stations[srcStationId];
+        sourcedList.push(srcStationId);
+        if (cityArea.border.includes(srcStation.name)) {
+            continue;
+        }
+        srcStation.lineIds.forEach(lineId => {
+            if (output.lines[lineId].shinkansen) {
+                return;
+            }
+            const lineStationIds = output.lines[lineId].stationIds;
+            const lineIndex = lineStationIds.indexOf(srcStationId);
+            [1, -1].forEach(diff => {
+                const newLineIndex = diff + lineIndex;
+                if (sourcedList.includes(lineStationIds[newLineIndex]) || newLineIndex < 0 || lineStationIds.length <= newLineIndex) {
+                    return;
+                }
+                const additionalStation = output.stations[lineStationIds[newLineIndex]];
+                if (cityStationIds.includes(additionalStation.id)) {
+                    return;
+                }
+                cityStationIds.push(additionalStation.id);
+            });
+        });
+    }
+    cityArea.reduce.forEach(name => {
+        cityStationIds.splice(cityStationIds.indexOf(output.stationNames.indexOf(name)), 1);
+    });
+    const cityId = output.cities.length;
+    output.cities.push({
+        id: cityId,
+        name: cityAreaName,
+        centralStationId: output.stationNames.indexOf(cityArea.center),
+        cityStationIds: cityStationIds
+    });
+    cityStationIds.forEach(stationId => {
+        output.stations[stationId].city = cityId;
     });
 }
 console.log(`import {OutputJSON} from './dataInterface'

@@ -1,18 +1,41 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
-
+[![Maintainability](https://api.codeclimate.com/v1/badges/26bb6e719bf4b4a32b97/maintainability)](https://codeclimate.com/github/m77so/deimos/maintainability)
+[![Dependency Status](https://gemnasium.com/badges/github.com/m77so/deimos.svg)](https://gemnasium.com/github.com/m77so/deimos)
 # これなに
 JRの運賃計算をしたい.
 
+https://m77.pw/deimos/ で公開しています
 # 注意
-まだつかいものになりません
+
+- まだつかいものになりません
+- 本ソフトウェアのデータの一部は、MARS for MS-DOS（SWA作）のデータを基に制作しております．
+- 商用利用不可です
 
 # 使い方
-1. `data`を見て
-2. `deimos`で`(npm|yarn) run start`
+1. `(npm|yarn) install`
+1. データを追加。詳細は`data`を見て
+2. `(npm|yarn) run start`
 
-もしくは https://m77.pw/deimos/ で公開しています
+This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
+
+### `(npm|yarn) start`
+
+Runs the app in the development mode.<br>
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
+The page will reload if you make edits.<br>
+You will also see any lint errors in the console.
+
+### `(npm|yarn) test`
+
+Launches the test runner in the interactive watch mode.<br>
+### `(npm|yarn) run build`
+
+Builds the app for production to the `build` folder.<br>
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
 # 旅規実装状況
-
+旅規　http://railway.jr-central.co.jp/ticket-rule/cjr-regulation/
 ## 第3章　旅客運賃・料金
 ### 第1節　通則
 | 番号       | 概要                     | 対応状況     |
@@ -70,8 +93,8 @@ JRの運賃計算をしたい.
 | 番号       | 概要                     | 対応状況     |
 |------------|--------------------------------|------|
 | 154条 | 有効期間 | ![未実装](https://img.shields.io/badge/%E5%AE%9F%E8%A3%85-%E6%9C%AA%E5%AE%9F%E8%A3%85-red.svg)   |
-| 155条 | 継続乗車 | ![未実装](https://img.shields.io/badge/%E5%AE%9F%E8%A3%85-%E6%9C%AA%E5%AE%9F%E8%A3%85-red.svg)   |
-| 156条 | 途中下車・大都市近郊区間 | ![未実装](https://img.shields.io/badge/%E5%AE%9F%E8%A3%85-%E6%9C%AA%E5%AE%9F%E8%A3%85-red.svg)   |
+| 155条 | 継続乗車 | ![未実装](https://img.shields.io/badge/%E5%AE%9F%E8%A3%85-%E6%9C%AA%E5%AE%9F%E8%A3%85-red.svg)   |
+| 156条 | 途中下車・大都市近郊区間 | ![未実装](https://img.shields.io/badge/%E5%AE%9F%E8%A3%85-%E6%9C%AA%E5%AE%9F%E8%A3%85-red.svg)   |
 | 157条 | 選択乗車 |  ![未実装](https://img.shields.io/badge/%E5%AE%9F%E8%A3%85-%E6%9C%AA%E5%AE%9F%E8%A3%85-red.svg)   |
 | 157条2項 | 大都市近郊区間内相互発着 | ![未実装](https://img.shields.io/badge/%E5%AE%9F%E8%A3%85-%E6%9C%AA%E5%AE%9F%E8%A3%85-red.svg)   |
 | 158条 | 特定区間における迂回乗車 | ![未実装](https://img.shields.io/badge/%E5%AE%9F%E8%A3%85-%E6%9C%AA%E5%AE%9F%E8%A3%85-red.svg)   |

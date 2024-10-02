@@ -1,7 +1,7 @@
 import { Action } from 'redux'
-import { textFunction, Route, RouteEdge, RouteNodeType } from './route'
+import { Route } from './Route'
+import TextRoute from './TextRoute'
 import { fare, FareResponse } from './fare'
-export { RouteEdge }
 enum ActionNames {
   TEXT = 'route/text',
   NEXT = 'route/next'
@@ -29,23 +29,23 @@ export const setNextPop = (line: boolean, text: string): NextAction => ({
 })
 export interface RouteState {
   source: string // 始発駅が入る　あんまり使ってない
-  destination: string // 着駅が入る　あんまり使ってない　
+  destination: string // 着駅が入る　あんまり使ってない
   text: string // 入力欄
   completionStation: string[] // 補完リスト・駅名
   completionLine: string[] // 補完リスト・路線名
   lastInputHalfway: boolean // 最後の要素が入力中途か判定　補完ボタンを押した時に除去するかどうか
-  duplicatedKomaru: boolean // 駅か路線かわからなくて困った時
+  duplicatedKomaru: string[] // 駅か路線かわからなくて困った時
   route: Route // 経路
   fare: FareResponse // 運賃
 }
 
 export type RouteActions = TextAction | NextAction
 
-const initialState: RouteState = {
+export const initialState: RouteState = {
   source: '',
   destination: '',
   text: '',
-  duplicatedKomaru: false,
+  duplicatedKomaru: [],
   completionLine: [],
   completionStation: [],
   lastInputHalfway: false,
@@ -57,23 +57,21 @@ export default function reducer(state: RouteState = initialState, action: RouteA
   let copyState = Object.assign({}, state)
   switch (action.type) {
     case ActionNames.NEXT:
-      copyState = textFunction(
-        copyState,
-        state.text
-          .replace(/^\s+|\s+$/g, '')
-          .replace(/\s+/g, ' ')
-          .split(' ')
-          .slice(0, state.lastInputHalfway ? -1 : 99999).concat(action.text)
-          .join(' '),
-        action.line ? RouteNodeType.LINE : RouteNodeType.STATION
-      )
+      copyState.route.next(action.line,action.text)
+      copyState.text = copyState.route.generateText('')
       copyState.fare = fare(copyState.route)
       break
     case ActionNames.TEXT:
-      copyState = textFunction(copyState, action.text)
+      copyState.text = action.text
+      .replace(/^\s+/g, '')
+      .replace(/\s+/g, ' ')
+      copyState.route = new TextRoute(action.text)
       copyState.fare = fare(copyState.route)
       break
     default:
   }
+  const completions = copyState.route.getCompletion()
+  copyState.completionLine = completions.line
+  copyState.completionStation = completions.station
   return copyState
 }

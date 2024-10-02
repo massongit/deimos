@@ -15,6 +15,7 @@ export interface Line {
   akms: Array<number>
   dupLineStationIds: Array<number>
   chiho: boolean
+  shinkansen: boolean
   company: number[]
   mapZairai: MapZairai[]
 }
@@ -24,11 +25,19 @@ export interface Station {
   kana: string
   lineIds: Array<number>
   company: number[]
+  city: number
+}
+export interface City {
+  id: number
+  name: string
+  centralStationId: number
+  cityStationIds: number[]
 }
 export interface OutputJSON {
   lineNames: Array<string>
   stationNames: Array<string>
   lines: Array<Line>
+  cities: Array<City>
   stations: Array<Station>
 }
 export enum Companies {
